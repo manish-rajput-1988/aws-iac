@@ -1,147 +1,67 @@
-variable "networking" {
-  type = object({
-    cidr_block      = string
-    region          = string
-    vpc_name        = string
-    azs             = list(string)
-    public_subnets  = list(string)
-    private_subnets = list(string)
-    nat_gateways    = bool
-  })
-  default = {
-    cidr_block      = "141.0.0.0/16"
-    region          = "eu-central-1"
-    vpc_name        = "terraform-vpc"
-    azs             = ["eu-central-1a", "eu-central-1b"]
-    public_subnets  = ["141.0.1.0/24", "141.0.2.0/24"]
-    private_subnets = ["141.0.3.0/24", "141.0.4.0/24"]
-    nat_gateways    = true
+#VPC
+module "aws_vpc" {
+  source          = "../modules/vpc"
+  networking      = var.networking
+  security_groups = var.security_groups
+}
+
+# EKS Cluster
+resource "aws_eks_cluster" "eks-cluster" {
+  name     = var.cluster_config.name
+  role_arn = aws_iam_role.EKSClusterRole.arn
+  version  = var.cluster_config.version
+
+  vpc_config {
+    subnet_ids         = flatten([module.aws_vpc.public_subnets_id, module.aws_vpc.private_subnets_id])
+    security_group_ids = flatten(module.aws_vpc.security_groups_id)
   }
-}
 
-variable "security_groups" {
-  type = list(object({
-    name        = string
-    description = string
-    ingress = list(object({
-      description      = string
-      protocol         = string
-      from_port        = number
-      to_port          = number
-      cidr_blocks      = list(string)
-      ipv6_cidr_blocks = list(string)
-    }))
-    egress = list(object({
-      description      = string
-      protocol         = string
-      from_port        = number
-      to_port          = number
-      cidr_blocks      = list(string)
-      ipv6_cidr_blocks = list(string)
-    }))
-  }))
-  default = [{
-    name        = "custom-security-group"
-    description = "Inbound & Outbound traffic for custom-security-group"
-    ingress = [
-      {
-        description      = "Allow HTTPS"
-        protocol         = "tcp"
-        from_port        = 443
-        to_port          = 443
-        cidr_blocks      = ["0.0.0.0/0"]
-        ipv6_cidr_blocks = null
-      },
-      {
-        description      = "Allow HTTP"
-        protocol         = "tcp"
-        from_port        = 80
-        to_port          = 80
-        cidr_blocks      = ["0.0.0.0/0"]
-        ipv6_cidr_blocks = null
-      },
-    ]
-    egress = [
-      {
-        description      = "Allow all outbound traffic"
-        protocol         = "-1"
-        from_port        = 0
-        to_port          = 0
-        cidr_blocks      = ["0.0.0.0/0"]
-        ipv6_cidr_blocks = ["::/0"]
-      }
-    ]
-  }]
-}
-
-variable "cluster_config" {
-  type = object({
-    name    = string
-    version = string
-  })
-  default = {
-    name    = "eks-cluster"
-    version = "1.22"
-  }
-}
-
-variable "node_groups" {
-  type = list(object({
-    name           = string
-    instance_types = list(string)
-    ami_type       = string
-    capacity_type  = string
-    disk_size      = number
-    scaling_config = object({
-      desired_size = number
-      min_size     = number
-      max_size     = number
-    })
-    update_config = object({
-      max_unavailable = number
-    })
-  }))
-  default = [
-    {
-      name           = "t3-medium-standard"
-      instance_types = ["t3.medium"]
-      ami_type       = "AL2_x86_64"
-      capacity_type  = "ON_DEMAND"
-      disk_size      = 20
-      scaling_config = {
-        desired_size = 2
-        max_size     = 3
-        min_size     = 1
-      }
-      update_config = {
-        max_unavailable = 1
-      }
-    },
+  depends_on = [
+    aws_iam_role_policy_attachment.AmazonEKSClusterPolicy
   ]
 
 }
 
-variable "addons" {
-  type = list(object({
-    name    = string
-    version = string
-  }))
-   default = [
-    {
-      name    = "kube-proxy"
-      version = "v1.31.3-eksbuild.2"
-    },
-    {
-      name    = "vpc-cni"
-      version = "v1.19.2-eksbuild.5"
-    },
-    {
-      name    = "coredns"
-      version = "v1.11.4-eksbuild.2"
-    },
-    {
-      name    = "aws-ebs-csi-driver"
-      version = "v1.35.0-eksbuild.0"
-    }
+# NODE GROUP
+resource "aws_eks_node_group" "node-ec2" {
+  for_each        = { for node_group in var.node_groups : node_group.name => node_group }
+  cluster_name    = aws_eks_cluster.eks-cluster.name
+  node_group_name = each.value.name
+  node_role_arn   = aws_iam_role.NodeGroupRole.arn
+  subnet_ids      = flatten(module.aws_vpc.private_subnets_id)
+
+  scaling_config {
+    desired_size = try(each.value.scaling_config.desired_size, 2)
+    max_size     = try(each.value.scaling_config.max_size, 3)
+    min_size     = try(each.value.scaling_config.min_size, 1)
+  }
+
+  update_config {
+    max_unavailable = try(each.value.update_config.max_unavailable, 1)
+  }
+
+  ami_type       = each.value.ami_type
+  instance_types = each.value.instance_types
+  capacity_type  = each.value.capacity_type
+  disk_size      = each.value.disk_size
+
+  depends_on = [
+    aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy
   ]
+}
+
+resource "aws_eks_addon" "addons" {
+  for_each          = { for addon in var.addons : addon.name => addon }
+  cluster_name      = aws_eks_cluster.eks-cluster.id
+  addon_name        = each.value.name
+  addon_version     = each.value.version
+  resolve_conflicts = "OVERWRITE"
+}
+
+resource "aws_iam_openid_connect_provider" "default" {
+  url             = "https://${local.oidc}"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
 }
