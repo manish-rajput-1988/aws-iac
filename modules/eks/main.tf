@@ -1,6 +1,6 @@
 #VPC
 module "aws_vpc" {
-  source          = "../modules/vpc"
+  source          = "../vpc"
   networking      = var.networking
   security_groups = var.security_groups
 }
