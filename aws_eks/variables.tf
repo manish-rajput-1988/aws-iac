@@ -9,12 +9,12 @@ variable "networking" {
     nat_gateways    = bool
   })
   default = {
-    cidr_block      = "141.0.0.0/16"
-    region          = "eu-central-1"
-    vpc_name        = "terraform-vpc"
-    azs             = ["eu-central-1a", "eu-central-1b"]
-    public_subnets  = ["141.0.1.0/24", "141.0.2.0/24"]
-    private_subnets = ["141.0.3.0/24", "141.0.4.0/24"]
+    cidr_block      = "10.0.0.0/16"
+    region          = "us-east-2"
+    vpc_name        = "taplent-non-prod-vpc"
+    azs             = ["us-east-2a", "us-east-2b"]
+    public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+    private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
     nat_gateways    = true
   }
 }
