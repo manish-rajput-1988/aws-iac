@@ -25,7 +25,7 @@ resource "aws_eks_cluster" "eks-cluster" {
 # NODE GROUP
 resource "aws_eks_node_group" "node-ec2" {
   for_each        = { for node_group in var.node_groups : node_group.name => node_group }
-  cluster_name    = aws_eks_cluster.eks-cluster.name
+  cluster_name    = data.aws_eks_cluster.eks-cluster.name
   node_group_name = each.value.name
   node_role_arn   = aws_iam_role.NodeGroupRole.arn
   subnet_ids      = flatten(module.aws_vpc.private_subnets_id)
@@ -54,7 +54,7 @@ resource "aws_eks_node_group" "node-ec2" {
 
 resource "aws_eks_addon" "addons" {
   for_each          = { for addon in var.addons : addon.name => addon }
-  cluster_name      = aws_eks_cluster.eks-cluster.id
+  cluster_name      = data.aws_eks_cluster.eks-cluster.id
   addon_name        = each.value.name
   addon_version     = each.value.version
   resolve_conflicts = "OVERWRITE"
