@@ -79,7 +79,10 @@ variable "cluster_config" {
     name    = string
     version = string
   })
-
+ default = {
+    name    = "tap-dev-eks-cluster"
+    version = "1.31"
+  }
 }
 
 variable "node_groups" {
