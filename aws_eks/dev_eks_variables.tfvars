@@ -69,8 +69,7 @@ node_groups = [
 addons = [
   {
     name    = "kube-proxy"
-    version = "v1.31.3-eksbuild.2"
-  },
+    version = "v1.41.0-eksbuild.1"
   {
     name    = "vpc-cni"
     version = "v1.19.2-eksbuild.5"
