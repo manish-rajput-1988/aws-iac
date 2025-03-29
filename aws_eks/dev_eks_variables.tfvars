@@ -81,6 +81,6 @@ addons = [
   },
   {
     name    = "aws-ebs-csi-driver"
-    version = "v1.35.0-eksbuild.0"
+    version = "v1.41.0-eksbuild.1"
   }
 ]
