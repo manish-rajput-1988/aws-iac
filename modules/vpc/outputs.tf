@@ -10,6 +10,3 @@ output "security_groups_id" {
   value = [for sec in var.security_groups : aws_security_group.sec_groups[sec.name].id]
 }
 
-output "vpc_id" {
-  value = aws_vpc.main.id
-}
