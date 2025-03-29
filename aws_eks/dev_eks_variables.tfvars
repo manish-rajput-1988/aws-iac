@@ -44,7 +44,7 @@ security_groups = [
 ]
 
 cluster_config = {
-  name    = "dev-eks-cluster"
+  name    = "tap-dev-eks-cluster"
   version = "1.31"
 }
 
