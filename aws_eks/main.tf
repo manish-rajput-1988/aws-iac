@@ -1,5 +1,5 @@
 module "eks" {
-  source           = "./modules/eks"
+  source           = "../modules/eks"
   cluster_name     = var.cluster_config.name
   cluster_version  = var.cluster_config.version
   cluster_role_arn = aws_iam_role.eks_cluster.arn
