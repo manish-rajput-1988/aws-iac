@@ -1,15 +1,13 @@
 module "eks" {
-  source           = "../modules/eks"
-  cluster_name     = var.cluster_config.name
-  cluster_version  = var.cluster_config.version
-  cluster_role_arn = aws_iam_role.eks_cluster.arn
-  subnet_ids       = flatten([var.networking.public_subnets, var.networking.private_subnets])
-  node_group_name  = var.node_groups[0].name
-  node_role_arn    = aws_iam_role.node_group.arn
-  instance_types   = var.node_groups[0].instance_types
-  disk_size        = var.node_groups[0].disk_size
-  desired_size     = var.node_groups[0].scaling_config.desired_size
-  min_size         = var.node_groups[0].scaling_config.min_size
-  max_size         = var.node_groups[0].scaling_config.max_size
-  max_unavailable  = var.node_groups[0].update_config.max_unavailable
+  source             = "../modules/eks"
+  cluster_config     = var.cluster_config
+  networking         = {
+    public_subnets_id  = module.vpc.public_subnets_id
+    private_subnets_id = module.vpc.private_subnets_id
+  }
+  security_groups_id = module.vpc.security_groups_id
+  node_groups        = var.node_groups
+  node_group_role_arn = aws_iam_role.NodeGroupRole.arn
+  addons             = var.addons
+  oidc               = "oidc.eks.us-east-2.amazonaws.com/id/EXAMPLE"
 }
