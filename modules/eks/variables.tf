@@ -79,10 +79,7 @@ variable "cluster_config" {
     name    = string
     version = string
   })
-  default = {
-    name    = "eks-cluster"
-    version = "1.31"
-  }
+
 }
 
 variable "node_groups" {
