@@ -66,20 +66,28 @@ node_groups = [
   }
 ]
 
-addons = [
-  {
-    name    = "kube-proxy"
-    version = "v1.41.0-eksbuild.1"
-  {
-    name    = "vpc-cni"
-    version = "v1.19.2-eksbuild.5"
-  },
-  {
-    name    = "coredns"
-    version = "v1.11.4-eksbuild.2"
-  },
-  {
-    name    = "aws-ebs-csi-driver"
-    version = "v1.35.0-eksbuild.0"
-  }
-]
+variable "addons" {
+  type = list(object({
+    name    = string
+    version = string
+  }))
+  default = [
+    {
+      name    = "aws-ebs-csi-driver"
+      version = "v1.41.0-eksbuild.1"
+      
+    },
+    {
+      name    = "vpc-cni"
+      version = "v1.19.2-eksbuild.5"
+    },
+    {
+      name    = "coredns"
+      version = "v1.11.4-eksbuild.2"
+    },
+    {
+      name    = "kube-proxy"
+      version = "v1.31.3-eksbuild.2"
+    }
+  ]
+}
