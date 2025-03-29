@@ -11,7 +11,7 @@ variable "networking" {
   default = {
     cidr_block      = "10.0.0.1/16"
     region          = "us-east-2"
-    vpc_name        = "taplent-non-prod-vpc"
+    vpc_name        = "tap-vpc"
     azs             = ["us-east-1a", "us-east-1b"]
     public_subnets  = ["10.0.1.1/24", "10.0.2.1/24"]
     private_subnets = ["10.0.3.1/24", "10.0.4.1/24"]
