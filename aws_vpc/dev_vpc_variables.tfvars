@@ -10,7 +10,7 @@ networking = {
 
 security_groups = [
   {
-    name        = "taplent-non-prod-security-group"
+    name        = "tap-dev-security-group"
     description = "Inbound & Outbound traffic for custom-security-group"
     ingress = [
       {
