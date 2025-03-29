@@ -1,5 +1,5 @@
 module "eks" {
-  source = "./modules/eks"
+  source = "../modules/eks"
   networking      = var.networking
   security_groups = var.security_groups
   cluster_config  = var.cluster_config
